@@ -491,9 +491,13 @@ draw.ideogram <- function(file_data, sizefile, output, directory = NULL, filefor
   colnames(tar_sizes) <- c("tarchr", "size")
   colnames(ref_sizes) <- c("refchr", "size")
 
-  data$tarchr <- factor(data$tarchr, levels = tar_sizes$tarchr)
-  data$refchr <- factor(data$refchr, levels = ref_sizes$refchr)
+  # After reading the sizes, sort them numerically
+  tar_sizes$tarchr <- factor(tar_sizes$tarchr, 
+                           levels = tar_sizes$tarchr[order(as.numeric(gsub("[^0-9]", "", tar_sizes$tarchr)))])
 
+# Then set the factor levels for data
+  data$tarchr <- factor(data$tarchr, levels = levels(tar_sizes$tarchr))
+  data$refchr <- factor(data$refchr, levels = ref_sizes$refchr)
 
   for (i in c(1:nrow(data))) {
     dir <- data[i, "orien"]
@@ -514,27 +518,102 @@ draw.ideogram <- function(file_data, sizefile, output, directory = NULL, filefor
 
 
 
-  plots <- ggplot2::ggplot(size = 0.2, font = 10, data = data) +
-    ggplot2::geom_rect(
-      data = tar_sizes, mapping = ggplot2::aes(xmin = 1, xmax = size, ymin = -0.1, ymax = 1.1),
-      fill = "white", color = "black", alpha = 0.85, linewidth = 0.2
+  # Block arrow function
+block_arrow <- function(x, y, width = 1, height = 0.4, head_width = 0.6, head_length = 0.5) {
+  # x,y = left-middle anchor point of the arrow
+  
+  # Body coordinates
+  body_length <- width * (1 - head_length)
+  head_length_abs <- width * head_length
+  
+  data.frame(
+    x = c(
+      x, 
+      x + body_length, 
+      x + body_length, 
+      x + width,
+      x + body_length, 
+      x + body_length, 
+      x
+    ),
+    y = c(
+      y - height/2,
+      y - height/2,
+      y - height/2 - (head_width-height)/2,
+      y,
+      y + height/2 + (head_width-height)/2,
+      y + height/2,
+      y + height/2
+    )
+  )
+}
+
+# Generate arrow polygons for each row in data
+# Generate arrow polygons for each row in data
+arrow_data <- do.call(rbind, lapply(1:nrow(data), function(i) {
+  row <- data[i, ]
+  
+  # Check if the alignment is inverted (has "-" in orien field)
+  inverted <- grepl("-", row$orien, fixed = TRUE)
+  
+  # Calculate arrow width
+  arrow_width <- abs(row$tarend - row$tarstart)
+  arrow_start <- min(row$tarstart, row$tarend)
+  
+  # Create base arrow (always left to right first)
+  arrow_df <- block_arrow(
+    x = arrow_start, 
+    y = 0.5, 
+    width = arrow_width, 
+    height = 0.6, 
+    head_width = 0.8, 
+    head_length = 0.1
+  )
+  
+  # If inverted, flip the arrow horizontally
+  if (inverted) {
+    arrow_df$x <- arrow_start + arrow_width - (arrow_df$x - arrow_start)
+  }
+  
+  # Add grouping and color information
+  arrow_df$id <- i
+  arrow_df$refchr <- row$refchr
+  arrow_df$tarchr <- row$tarchr
+  
+  return(arrow_df)
+}))
+
+# Create the plot
+plots <- ggplot2::ggplot() +
+#    ggplot2::geom_rect(
+#      data = tar_sizes, 
+#      mapping = ggplot2::aes(xmin = 1, xmax = size, ymin = -0.1, ymax = 1.1),
+#      fill = "white", color = "black", alpha = 0.85, linewidth = 0.2
+#    ) +
+    ggplot2::geom_segment(
+      data = tar_sizes,
+      ggplot2::aes(x = 1, xend = size, y = 0.5, yend = 0.5),
+      linewidth = 1,
+      color = "gray30"
     ) +
-    ggplot2::geom_rect(
-      data = data, mapping = ggplot2::aes(xmin = tarstart, xmax = tarend, ymin = -0.1, ymax = 1.1, fill = refchr),
+    ggplot2::geom_polygon(
+      data = arrow_data,
+      mapping = ggplot2::aes(x = x, y = y, group = id, fill = refchr),
       color = "black", alpha = 0.85, linewidth = 0.2
     ) +
-    ggplot2::geom_segment(data = data, mapping = ggplot2::aes(x = tarstart, y = ystart, xend = tarend, yend = yend), linewidth = 0.2) +
     ggplot2::facet_grid(as.factor(tarchr) ~ .) +
-    ggplot2::labs(fill = "Reference", x = "Chomosome length (Mb)", size = 10) +
+    ggplot2::labs(fill = "Reference", x = "Chromosome length (Mb)") +
     ggplot2::theme(
       axis.title.y = ggplot2::element_blank(),
       axis.text.y = ggplot2::element_blank(),
       axis.text.x = ggplot2::element_text(size = 10),
       axis.ticks.y = ggplot2::element_blank(),
-      axis.ticks = ggplot2::element_line(size = 0.2),
+      axis.ticks = ggplot2::element_line(linewidth = 0.2),
       strip.text.y = ggplot2::element_text(angle = 0, face = "bold", size = 10),
       panel.grid.minor = ggplot2::element_blank(),
       panel.grid.major = ggplot2::element_blank(),
+      panel.background = ggplot2::element_blank(),
+      strip.background = ggplot2::element_blank(),
       legend.title.align = 0.5
     ) +
     ggplot2::guides(fill = ggplot2::guide_legend(ncol = 1)) +
@@ -550,6 +629,7 @@ draw.ideogram <- function(file_data, sizefile, output, directory = NULL, filefor
       )
     )
   message(paste0("Saving ideogram image to ", directory))
+  message(paste0("Hello I am here!!! ", directory))
   print(plots)
   ggplot2::ggsave(paste0(directory,"/",output, ".", fileformat), plots, device = fileformat, width = w, height = h, pointsize = ps)
 }
