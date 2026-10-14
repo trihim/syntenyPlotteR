@@ -10,7 +10,26 @@ This package has been developed by Joana Damas ([joanadamas\@gmail.com](mailto:j
 
 It has been tested in Windows 10 R v4.0.3, Windows 11 with R v4.1.1 and v4.2.2 and MAC OS Ventura 13.1
 
+------------------------------------------------------------------------
+
+## About this fork
+
+This is a fork of [Farre-lab/syntenyPlotteR](https://github.com/Farre-lab/syntenyPlotteR) with two changes, both confined to `draw.ideogram`:
+
+-   **Syntenic blocks are drawn as block arrows rather than rectangles.** Each block becomes an arrow polygon, and blocks whose `orien` field contains `-` are flipped horizontally, so inverted alignments are readable directly off the plot.
+-   **Target chromosomes are sorted numerically.** Upstream orders them by their position in the size file, which puts `chr10` before `chr2`. The fork sorts on the numeric part of the chromosome name.
+
+`draw.linear`, `draw.eh` and `reformat.syntenyData` are unchanged from upstream, as is the input file format. Everything below is the upstream documentation.
+
 ## To install:
+
+### Using this fork
+
+``` r
+install.packages("remotes")
+remotes::install_github("trihim/syntenyPlotteR")
+library(syntenyPlotteR)
+```
 
 ### Using CRAN
 
