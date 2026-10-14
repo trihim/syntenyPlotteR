@@ -193,7 +193,8 @@ Target is the species which chromosomes will be painted. Reference will be used 
 draw.ideogram("example_alignment_1.txt", "example_lengths.txt", "example.ideogram")
 ```
 
-**Example output**
+**Example output** (regenerated with this fork, so it shows the
+block arrows rather than upstream's rectangles)
 
 ![](vignettes/images/example.ideogram.png){width="320"}
 

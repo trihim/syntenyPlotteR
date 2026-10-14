@@ -629,7 +629,6 @@ plots <- ggplot2::ggplot() +
       )
     )
   message(paste0("Saving ideogram image to ", directory))
-  message(paste0("Hello I am here!!! ", directory))
   print(plots)
   ggplot2::ggsave(paste0(directory,"/",output, ".", fileformat), plots, device = fileformat, width = w, height = h, pointsize = ps)
 }

@@ -246,7 +246,8 @@ order as in the target sizes file.
 draw.ideogram("example_alignment_1.txt", "example_lengths.txt", "example.ideogram")
 ```
 
-**Example output**
+**Example output** (regenerated with this fork, so it shows the
+block arrows rather than upstream's rectangles)
 
 <img src="vignettes/images/example.ideogram.png" width="320" />
 
